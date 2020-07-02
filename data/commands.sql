@@ -15,13 +15,26 @@ FROM
 	information_schema.COLUMNS
 WHERE
 	TABLE_NAME = '${table}' ORDER BY ordinal_position;
+--! TableKeys:
+SELECT key_column FROM (SELECT kcu.table_schema,
+       kcu.table_name,
+       tco.constraint_name,
+       tco.constraint_type,
+       kcu.ordinal_position AS position,
+       kcu.column_name AS key_column
+FROM information_schema.table_constraints tco
+JOIN information_schema.key_column_usage kcu
+     ON kcu.constraint_name = tco.constraint_name
+     AND kcu.constraint_schema = tco.constraint_schema
+     AND kcu.constraint_name = tco.constraint_name
+WHERE tco.constraint_type = 'PRIMARY KEY'
+ORDER BY kcu.table_schema,
+         kcu.table_name,
+         position) AS X WHERE table_name = '${table}';
 --! ForeignKeyRelations:
 SELECT DISTINCT
-    tc.table_schema,
     tc.constraint_name,
-    tc.table_name,
     kcu.column_name,
-    ccu.table_schema AS foreign_table_schema,
     ccu.table_name AS foreign_table_name,
     ccu.column_name AS foreign_column_name
 FROM
@@ -33,15 +46,10 @@ FROM
       ON ccu.constraint_name = tc.constraint_name
       AND ccu.table_schema = tc.table_schema
 WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name = '${table}';
---! ForeignKeyRelationsAll:
+--! AllTablesForeignKeyRelations:
 SELECT DISTINCT
-        tc.table_schema,
-        tc.constraint_name,
         tc.table_name,
-        kcu.column_name,
-        ccu.table_schema AS foreign_table_schema,
-        ccu.table_name AS foreign_table_name,
-        ccu.column_name AS foreign_column_name
+        ccu.table_name AS foreign_table_name
     FROM
         information_schema.table_constraints AS tc
         JOIN information_schema.key_column_usage AS kcu

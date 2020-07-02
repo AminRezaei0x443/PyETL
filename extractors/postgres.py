@@ -6,6 +6,5 @@ class PostgresExtractor(Extractor):
         super().__init__("postgres-extractor")
 
     def extract(self, **kwargs):
-
         pass
 
