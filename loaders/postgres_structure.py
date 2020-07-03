@@ -13,7 +13,7 @@ from util.sql_loader import SqlLoader
 
 class PostgresStructureLoader(Loader):
     """
-    Extracts and returns structures of all Tables in a Database
+    Loads given structures in a database
     """
 
     def __init__(self):
@@ -22,7 +22,7 @@ class PostgresStructureLoader(Loader):
 
     def load(self, time_machine=True, structure: Tuple[Dict[str, Table], List[str]] = None, **kwargs):
         """
-        Extracts and returns structures of all Tables in a Database + DAG Of Tables
+        Loads given structure into new database
         :param time_machine: Whether use time_machine or not
         :param structure: Structure of Tables + DAG
         :param kwargs: keyword arguments used for extraction options as:
@@ -55,12 +55,8 @@ class PostgresStructureLoader(Loader):
             else:
                 total_query.append(tables[t].to_sql() + "\n")
         for query in total_query:
-            # try:
             db.exec(query)
             db.commit()
-            # except:
-            #     print(query)
-            #     break
         pass
 
     @staticmethod
@@ -86,14 +82,7 @@ class TimeMachineTable:
         for k in self.table.keys:
             mini_c.append("%s WITH =" % k)
         mini_c.append("__lifetime WITH &&")
-        # cmds.append("PRIMARY KEY (%s)" % (",".join(self.table.keys + ["__lifetime"])))
         cmds.append("EXCLUDE USING gist (%s)" % (",".join(mini_c)))
-        # cmds.append("PRIMARY KEY(%s)" % ",".join(self.table.keys))
-        # for name, column, target_table, target_column in self.table.fk_relations:
-            # c = "CONSTRAINT %s (%s) \n\t\t REFERENCES %s(%s)"
-            # c = "CONSTRAINT %s \n\t FOREIGN KEY (%s, __lifetime) \n\t\t REFERENCES %s(%s, __lifetime)"
-            # c = c % (name, column, target_table, target_column)
-            # cmds.append(c)
         q += ",\n".join(cmds)
         q += "\n);"
         # Create TimeMachine Procedure Function For Trigger

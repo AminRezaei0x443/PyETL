@@ -9,6 +9,16 @@ if __name__ == "__main__":
     resources.add(ResourceConsts.COMMANDS_LOADER, sqlLoader)
 
     pipeline = Pg2PgPipeline()
-    pipeline.run(constructing=True, src_connection={}, target_connection={
-        "db": "lg1"
+    # connection is connection params:
+    '''
+         - host: str = "localhost"
+         - port: int = 5432
+         - db: str = "postgres"
+         - user: str = ""
+         - pwd: str = ""
+    '''
+    pipeline.run(constructing=True, src_connection={
+
+    }, target_connection={
+        "db": "library"
     })

@@ -16,6 +16,15 @@ class PostgresConsistencyFixer(Fixer):
     def fix(self, db_src: PostgresAccessor, db_target: PostgresAccessor,
             structure: Tuple[Dict[str, Table], List[str]] = None,
             time_machine=True, **kwargs):
+        """
+        Fixes and provides consistency checks
+        :param db_src: source db
+        :param db_target: target db
+        :param structure: structures of source db
+        :param time_machine: whether to use time machine
+        :param kwargs: ...
+        :return:
+        """
         if structure is None:
             raise RuntimeError("Structure must've been provided!")
         tables, top_order = structure

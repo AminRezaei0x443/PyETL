@@ -13,6 +13,14 @@ class PostgresExtractor(Extractor):
         self.res = GlobalResources()
 
     def extract(self, offset=0, n=1, table=None, **kwargs):
+        """
+        Extracts n records with offset from some table
+        :param offset: offset
+        :param n: number of records
+        :param table: source table
+        :param kwargs: connection params
+        :return:
+        """
         if table is None:
             raise RuntimeError("Must specify table!")
         db = PostgresAccessor.obtain(**DictUtil.filter(kwargs, CodeUtil.func_args(PostgresAccessor.__init__)))

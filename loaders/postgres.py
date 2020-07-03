@@ -14,6 +14,19 @@ class PostgresLoader(Loader):
         self.res = GlobalResources()
 
     def load(self, data=None, table: Table = None, time_machine=True, **kwargs):
+        """
+          Loads given structure into new database
+          :param table: target table
+          :param data: data to load/insert
+          :param time_machine: Whether use time_machine or not
+          :param kwargs: keyword arguments used for extraction options as:
+               - host: str = "localhost"
+               - port: int = 5432
+               - db: str = "postgres"
+               - user: str = ""
+               - pwd: str = ""
+          :return: Dict[str, Table]
+        """
         if table is None or data is None:
             raise RuntimeError("Must specify table and data!")
         db = PostgresAccessor.obtain(**DictUtil.filter(kwargs, CodeUtil.func_args(PostgresAccessor.__init__)))
