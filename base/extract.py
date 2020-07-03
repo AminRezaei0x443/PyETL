@@ -23,5 +23,8 @@ class Extract(Task):
         for s in self.stack:
             extractor, params = s
             res[extractor.name] = extractor(**params)
+        self.stack.clear()
         return res
 
+    def __len__(self):
+        return len(self.stack)

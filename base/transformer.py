@@ -7,3 +7,7 @@ class Transformer:
 
     def __call__(self, *args, **kwargs):
         return self.transform(**kwargs)
+
+    @staticmethod
+    def name():
+        return "vanilla-transformer"

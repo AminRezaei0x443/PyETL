@@ -61,3 +61,72 @@ SELECT DISTINCT
     WHERE tc.constraint_type = 'FOREIGN KEY';
 --! Generic Insert:
 INSERT INTO ${table} (${id}) VALUES (${id_value});
+--! Table Item Count:
+SELECT COUNT(*) FROM ${table};
+--! Generic Select:
+SELECT * FROM ${table} OFFSET ${offset} LIMIT ${limit};
+--! Generic Select Cond:
+SELECT * FROM ${table} WHERE ${conditions};
+--! Generic Delete Cond:
+DELETE FROM ${table} WHERE ${conditions};
+--! Generic Update Cond:
+UPDATE ${table} SET ${update_conditions} WHERE ${conditions};
+--! Gist Extension:
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+--! TimeMachine Func:
+CREATE FUNCTION time_machine_versioning_${table}() RETURNS TRIGGER AS
+$$
+BEGIN
+    IF TG_OP = 'UPDATE'
+    THEN
+        IF ${confliction_check} THEN
+            RAISE EXCEPTION 'ID Cols is considered to be constant and not changed during time!';
+        END IF;
+
+        UPDATE  ${table} SET __lifetime = tstzrange(lower(__lifetime), current_timestamp)
+        WHERE   ${id_search} AND current_timestamp <@ __lifetime;
+
+        IF NOT FOUND THEN
+            RETURN NULL;
+        END IF;
+    END IF;
+
+    IF TG_OP IN ('INSERT', 'UPDATE')
+    THEN
+        INSERT INTO ${table} (${id_cols}, __lifetime ${cols}) VALUES
+            (${id_cols_new}, tstzrange(current_timestamp, TIMESTAMPTZ 'infinity') ${col_datas});
+        RETURN NEW;
+    END IF;
+
+    IF TG_OP = 'DELETE'
+    THEN
+        UPDATE ${table} SET __lifetime = tstzrange(lower(__lifetime), current_timestamp)
+        WHERE ${id_search_old} AND current_timestamp <@ __lifetime;
+        IF FOUND THEN
+            RETURN OLD;
+        ELSE
+            RETURN NULL;
+        END IF;
+    END IF;
+END;
+$$ LANGUAGE plpgsql;
+--! TimeMachine View:
+CREATE VIEW ${table}_t AS
+    SELECT  ${cols}
+    FROM    ${table}
+    WHERE   current_setting('time_machine.time')::tstzrange <@ __lifetime;
+--! TimeMachine View Now:
+CREATE VIEW ${table}_now AS
+    SELECT  ${cols}
+    FROM    ${table}
+    WHERE   current_timestamp <@ __lifetime;
+--! TimeMachine Trigger:
+CREATE TRIGGER ${table}_trigger
+    INSTEAD OF INSERT OR UPDATE OR DELETE
+    ON ${table}_now
+    FOR EACH ROW
+    EXECUTE PROCEDURE time_machine_versioning_${table}();
+--! ID Cols All:
+SELECT ${id} FROM ${table};
+--! Set TimeMachine Time:
+SET time_machine.time = '2020-01-01 00:00:00';

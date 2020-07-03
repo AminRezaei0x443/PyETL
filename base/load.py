@@ -24,5 +24,8 @@ class Load(Task):
         for s in self.stack:
             loader, params = s
             res[loader.name] = loader(**params)
+        self.stack.clear()
         return res
 
+    def __len__(self):
+        return len(self.stack)

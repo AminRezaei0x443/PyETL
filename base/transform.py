@@ -23,5 +23,6 @@ class Transform(Task):
         for s in self.stack:
             transformer, params = s
             res[transformer.name] = transformer(**params)
+        self.stack.clear()
         return res
 

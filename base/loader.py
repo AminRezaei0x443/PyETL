@@ -7,3 +7,7 @@ class Loader:
 
     def __call__(self, *args, **kwargs):
         return self.load(**kwargs)
+
+    @staticmethod
+    def name():
+        return "vanilla-loader"

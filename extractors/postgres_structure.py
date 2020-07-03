@@ -30,7 +30,7 @@ class PostgresStructureExtractor(Extractor):
              - pwd: str = ""
         :return: Dict[str, Table]
         """
-        db = PostgresAccessor(**DictUtil.filter(kwargs, CodeUtil.func_args(PostgresAccessor.__init__)))
+        db = PostgresAccessor.obtain(**DictUtil.filter(kwargs, CodeUtil.func_args(PostgresAccessor.__init__)))
 
         result = {}
 
@@ -59,6 +59,10 @@ class PostgresStructureExtractor(Extractor):
             db.exec(fkr_q)
             for r in db.fetch_all():
                 t.add_relation(r[0], r[1], r[2], r[3])
+            c_q = loader.pick("Table Item Count", table=table)
+            db.exec(c_q)
+            t.set_items_count(db.fetch_one()[0])
+
         # -- Extracting DAG
         ed = []
 
@@ -70,12 +74,17 @@ class PostgresStructureExtractor(Extractor):
         g = nx.DiGraph(ed)
         return result, list(nx.topological_sort(g))
 
+    @staticmethod
+    def name():
+        return "postgres-structure"
+
 
 class Table:
     def __init__(self, name):
         self.name = name
         self.columns = []
         self.keys = []
+        self.count = 0
         self.fk_relations = []
 
     def add_column(self, name: str, datatype: str, nullable: bool, max_len_char: int):
@@ -86,6 +95,9 @@ class Table:
 
     def add_relation(self, name, column, target_table, target_column):
         self.fk_relations.append((name, column, target_table, target_column))
+
+    def set_items_count(self, count):
+        self.count = count
 
     def to_sql(self):
         q = "CREATE TABLE %s(\n" % self.name
